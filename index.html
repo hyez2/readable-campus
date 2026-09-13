@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="교내 공지가 저시력·색약·시각장애 학생에게 읽히는지 1분 안에 확인하는 웹 접근성 자가진단 도구. WCAG 2.1 기준.">
+<meta property="og:title" content="읽히는캠퍼스 — 교내 공지 웹 접근성 자가진단">
+<meta property="og:description" content="명암비 검사기, 시야 시뮬레이터, 스크린리더 비교, 10문항 자가진단. 설치 없이 링크만으로.">
+<meta property="og:type" content="website">
+<style>
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+  .skip{position:absolute;left:-9999px;top:0;background:#0B5C86;color:#fff;padding:10px 16px;z-index:100}
+  .skip:focus{left:8px;top:8px}
+</style>
+<title>읽히는캠퍼스</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#FFFFFF; --bg-2:#F2F4F5; --card:#FFFFFF;
+    --ink:#13181B; --ink-2:#4A555B; --ink-3:#78858C;
+    --line:#DCE2E5; --line-2:#B9C3C8;
+    --accent:#0B5C86; --accent-soft:#E3EEF4;
+    --pass:#14653A; --pass-soft:#E2F1E8;
+    --fail:#9E1C24; --fail-soft:#FBE7E7;
+    --warnc:#8A5A00; --warn-soft:#FBF0DC;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1416; --bg-2:#161F23; --card:#151D21;
+      --ink:#EDF2F4; --ink-2:#AEBBC1; --ink-3:#7E8C93;
+      --line:#27343A; --line-2:#3A4A51;
+      --accent:#7EC4E8; --accent-soft:#14313F;
+      --pass:#7FD3A4; --pass-soft:#122B1E;
+      --fail:#F09A9E; --fail-soft:#2E1618;
+      --warnc:#E8C374; --warn-soft:#2C2312;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1416; --bg-2:#161F23; --card:#151D21;
+    --ink:#EDF2F4; --ink-2:#AEBBC1; --ink-3:#7E8C93;
+    --line:#27343A; --line-2:#3A4A51;
+    --accent:#7EC4E8; --accent-soft:#14313F;
+    --pass:#7FD3A4; --pass-soft:#122B1E;
+    --fail:#F09A9E; --fail-soft:#2E1618;
+    --warnc:#E8C374; --warn-soft:#2C2312;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    font-size:16px;line-height:1.75;letter-spacing:-0.004em;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px 96px;}
+  h1,h2,h3{font-family:"Gowun Batang","Apple SD Gothic Neo",serif;font-weight:700;margin:0;line-height:1.35;text-wrap:balance;}
+  p{margin:0;}
+  .mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+  a{color:var(--accent);}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:2px;}
+
+  header.mast{padding:56px 0 30px;display:flex;flex-direction:column;gap:18px;border-bottom:2px solid var(--ink);}
+  .kicker{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-3);}
+  .mast h1{font-size:clamp(32px,5.4vw,52px);letter-spacing:-0.025em;}
+  .lede{font-size:17.5px;color:var(--ink-2);max-width:60ch;}
+  .status{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px;}
+  .badge{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:0.08em;
+    border:1px solid var(--line-2);padding:3px 10px;color:var(--ink-2);}
+  .badge.live{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;}
+
+  section{padding-top:56px;}
+  .shead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px;}
+  .snum{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent);font-weight:600;letter-spacing:0.1em;}
+  .shead h2{font-size:26px;}
+  .sdesc{color:var(--ink-2);font-size:15.5px;max-width:62ch;margin-bottom:22px;}
+
+  .tool{border:2px solid var(--line-2);background:var(--card);padding:22px;}
+  .tool + .tool{margin-top:18px;}
+
+  /* contrast checker */
+  .cc{display:grid;gap:20px;grid-template-columns:1fr 1fr;}
+  @media (max-width:640px){.cc{grid-template-columns:1fr;}}
+  .ccfield{display:flex;flex-direction:column;gap:7px;}
+  .ccfield label{font-size:13px;font-weight:600;color:var(--ink-2);}
+  .ccrow{display:flex;gap:9px;align-items:center;}
+  input[type=color]{width:52px;height:40px;padding:0;border:1px solid var(--line-2);background:var(--card);cursor:pointer;}
+  input[type=text]{flex:1;min-width:0;font-family:"IBM Plex Mono",monospace;font-size:14px;
+    padding:9px 11px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);}
+  .preview{margin-top:18px;border:1px solid var(--line-2);padding:22px;}
+  .preview .big{font-size:24px;font-weight:700;margin-bottom:6px;}
+  .preview .small{font-size:15px;}
+  .verdicts{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:16px;}
+  .v{border:1px solid var(--line);padding:11px 13px;}
+  .v .vl{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);}
+  .v .vr{font-weight:700;font-size:15px;margin-top:2px;}
+  .v.ok{background:var(--pass-soft);border-color:var(--pass);}
+  .v.ok .vr{color:var(--pass);}
+  .v.no{background:var(--fail-soft);border-color:var(--fail);}
+  .v.no .vr{color:var(--fail);}
+  .ratio{font-family:"IBM Plex Mono",monospace;font-size:40px;font-weight:600;line-height:1;letter-spacing:-0.02em;}
+  .ratiowrap{display:flex;align-items:baseline;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .ratiowrap .lbl{font-size:13px;color:var(--ink-3);}
+
+  /* sim */
+  .tabs{display:flex;gap:0;flex-wrap:wrap;border-bottom:1px solid var(--line-2);margin-bottom:0;}
+  .tabs button{font:inherit;font-size:14px;font-weight:600;background:none;border:0;border-bottom:3px solid transparent;
+    padding:10px 15px;color:var(--ink-3);cursor:pointer;}
+  .tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);}
+  .simstage{border:1px solid var(--line-2);border-top:0;padding:26px;background:var(--bg-2);}
+  .notice{background:var(--card);border:1px solid var(--line);padding:20px;max-width:520px;margin:0 auto;}
+  .notice .nt{font-family:"Gowun Batang",serif;font-size:19px;font-weight:700;margin-bottom:8px;}
+  .notice .nm{font-size:14px;color:var(--ink-2);line-height:1.7;}
+  .notice .nbtn{display:inline-block;margin-top:14px;background:var(--accent);color:var(--bg);
+    padding:9px 16px;font-size:14px;font-weight:600;}
+  .simnote{font-size:13.5px;color:var(--ink-2);margin-top:12px;line-height:1.6;}
+
+  /* screen reader */
+  .srgrid{display:grid;gap:16px;grid-template-columns:1fr 1fr;}
+  @media (max-width:700px){.srgrid{grid-template-columns:1fr;}}
+  .srbox{border:1px solid var(--line-2);padding:16px;}
+  .srbox h3{font-size:15px;font-family:"IBM Plex Sans KR",sans-serif;font-weight:700;margin-bottom:10px;display:flex;gap:7px;align-items:center;}
+  .srbox.bad{background:var(--fail-soft);border-color:var(--fail);}
+  .srbox.good{background:var(--pass-soft);border-color:var(--pass);}
+  .srbox.bad h3{color:var(--fail);}
+  .srbox.good h3{color:var(--pass);}
+  .srlines{font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.85;color:var(--ink);}
+  .srlines div{padding:2px 0;}
+  .srlines .q{color:var(--ink-3);}
+
+  /* checklist */
+  .check{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-2);}
+  .check label{display:flex;gap:13px;align-items:flex-start;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .check label:last-of-type{border-bottom:0;}
+  .check input{width:20px;height:20px;margin-top:3px;flex:none;accent-color:var(--accent);cursor:pointer;}
+  .check .qt{font-size:15px;}
+  .check .qh{display:block;font-size:13px;color:var(--ink-3);margin-top:2px;line-height:1.55;}
+  .score{margin-top:16px;border:2px solid var(--ink);padding:18px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+  .score .n{font-family:"IBM Plex Mono",monospace;font-size:34px;font-weight:600;line-height:1;}
+  .score .txt{font-size:15px;color:var(--ink-2);flex:1 1 240px;}
+
+  ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  ul.plain li{font-size:15.5px;line-height:1.65;padding-left:16px;position:relative;}
+  ul.plain li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--line-2);}
+  .prog{border-left:3px solid var(--accent);background:var(--accent-soft);padding:16px 20px;}
+  .prog h3{font-size:17px;margin-bottom:8px;}
+  table.road{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px;}
+  table.road td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.road td:first-child{width:110px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--accent);font-weight:600;white-space:nowrap;}
+  table.road tr:last-child td{border-bottom:0;}
+  table.road .done{color:var(--pass);font-weight:600;}
+  footer{margin-top:70px;padding-top:22px;border-top:2px solid var(--ink);color:var(--ink-3);font-size:13px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="f-prot"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+  <filter id="f-deut"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.70 0.30 0 0 0  0 0.30 0.70 0 0  0 0 0 1 0"/></filter>
+  <filter id="f-low"><feGaussianBlur stdDeviation="2.1"/></filter>
+  <filter id="f-cat"><feGaussianBlur stdDeviation="1.1"/><feComponentTransfer><feFuncR type="linear" slope="0.62" intercept="0.30"/><feFuncG type="linear" slope="0.62" intercept="0.29"/><feFuncB type="linear" slope="0.62" intercept="0.22"/></feComponentTransfer></filter>
+</svg>
+
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+<main id="main">
+<div class="wrap">
+
+<header class="mast">
+  <span class="kicker">CREAI+IT · 2026-2 IHEI Workstation 신청 프로젝트</span>
+  <h1>읽히는캠퍼스</h1>
+  <p class="lede">학교 공지가 모두에게 똑같이 읽히지는 않습니다. 대비가 낮은 글씨, 설명 없는 이미지 공지, 제목 구조 없는 안내문은 저시력·색약·시각장애 학생에게 사실상 존재하지 않는 정보입니다. 이 페이지는 누구나 1분 안에 자기 공지가 읽히는지 확인할 수 있는 진단 도구입니다.</p>
+  <div class="status">
+    <span class="badge live">v0.1 공개</span>
+    <span class="badge">2026.09.13</span>
+    <span class="badge">WCAG 2.1 기준</span>
+    <span style="color:var(--ink-3)">아래 도구는 실제로 동작합니다. 직접 값을 바꿔 보세요.</span>
+  </div>
+</header>
+
+<section>
+  <div class="shead"><span class="snum">TOOL 01</span><h2>글자 대비 검사기</h2></div>
+  <p class="sdesc">공지 이미지나 포스터에 쓴 색 두 개를 넣으면 WCAG 명암비를 계산합니다. 학생회 포스터에서 가장 자주 걸리는 항목이자, 고치기도 가장 쉬운 항목입니다.</p>
+  <div class="tool">
+    <div class="cc">
+      <div class="ccfield">
+        <label for="fg">글자 색</label>
+        <div class="ccrow">
+          <input type="color" id="fgp" value="#7A8B94" aria-label="글자 색 선택기">
+          <input type="text" id="fg" value="#7A8B94" spellcheck="false" aria-label="글자 색 16진수 값">
+        </div>
+      </div>
+      <div class="ccfield">
+        <label for="bg">배경 색</label>
+        <div class="ccrow">
+          <input type="color" id="bgp" value="#FFFFFF" aria-label="배경 색 선택기">
+          <input type="text" id="bg" value="#FFFFFF" spellcheck="false" aria-label="배경 색 16진수 값">
+        </div>
+      </div>
+    </div>
+    <div class="preview" id="pv">
+      <div class="big">2026학년도 2학기 장학금 신청 안내</div>
+      <div class="small">신청 기간: 9월 21일(월) 10:00 ~ 9월 25일(금) 17:00 · 학생지원팀</div>
+    </div>
+    <div class="ratiowrap">
+      <span class="ratio" id="ratio">3.2:1</span>
+      <span class="lbl">명암비 (최대 21:1)</span>
+    </div>
+    <div class="verdicts">
+      <div class="v" id="v-aa"><div class="vl">본문 AA (4.5:1)</div><div class="vr">—</div></div>
+      <div class="v" id="v-aaa"><div class="vl">본문 AAA (7:1)</div><div class="vr">—</div></div>
+      <div class="v" id="v-large"><div class="vl">큰 글씨 AA (3:1)</div><div class="vr">—</div></div>
+      <div class="v" id="v-ui"><div class="vl">버튼·아이콘 (3:1)</div><div class="vr">—</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">TOOL 02</span><h2>다르게 보이는 공지</h2></div>
+  <p class="sdesc">같은 공지문을 네 가지 조건으로 봅니다. 색약은 한국 남성의 약 5%에서 나타나고, 저시력은 안경으로 교정되지 않는 시력을 뜻합니다. 강의실에 반드시 한 명은 있는 조건입니다.</p>
+  <div class="tool" style="padding:0;border:0">
+    <div class="tabs" role="tablist" aria-label="시야 조건 선택">
+      <button role="tab" aria-selected="true" data-f="none">원본</button>
+      <button role="tab" aria-selected="false" data-f="f-low">저시력</button>
+      <button role="tab" aria-selected="false" data-f="f-deut">적록색약</button>
+      <button role="tab" aria-selected="false" data-f="f-cat">백내장·노안</button>
+    </div>
+    <div class="simstage">
+      <div class="notice" id="simtarget">
+        <div class="nt">수강신청 정정 기간 안내</div>
+        <div class="nm">정정 기간은 <span style="color:#D14343;font-weight:700">9월 15일까지</span>이며, 기간 이후에는 <span style="color:#2E9E5B;font-weight:700">정정이 불가능</span>합니다. 자세한 사항은 학사지원팀으로 문의해 주시기 바랍니다.</div>
+        <span class="nbtn">신청 바로가기</span>
+      </div>
+    </div>
+    <p class="simnote" id="simnote">중요한 정보를 색으로만 구분하면, 색으로 구분하지 못하는 사람에게는 그 정보가 사라집니다. 빨강·초록으로 나눈 "가능/불가능"이 대표적입니다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">TOOL 03</span><h2>스크린리더는 이렇게 읽습니다</h2></div>
+  <p class="sdesc">시각장애 학생은 공지를 눈으로 보지 않고 소리로 듣습니다. 같은 내용이라도 만든 방식에 따라 이렇게 달라집니다.</p>
+  <div class="srgrid">
+    <div class="srbox bad">
+      <h3>✕ 이미지 한 장으로 올린 공지</h3>
+      <div class="srlines">
+        <div>"이미지"</div>
+        <div class="q">— 끝 —</div>
+        <div style="margin-top:10px;color:var(--ink-2);font-family:inherit;font-size:13.5px;line-height:1.6">포스터를 그대로 캡처해 올리면 내용 전체가 읽히지 않습니다. 학생회 공지에서 가장 흔한 형태입니다.</div>
+      </div>
+    </div>
+    <div class="srbox good">
+      <h3>✓ 텍스트와 대체설명이 있는 공지</h3>
+      <div class="srlines">
+        <div>"제목 수준 1, 수강신청 정정 기간 안내"</div>
+        <div>"본문, 정정 기간은 9월 15일까지입니다"</div>
+        <div>"이미지, 정정 절차 4단계 안내도"</div>
+        <div>"링크, 수강신청 시스템으로 이동"</div>
+      </div>
+    </div>
+  </div>
+  <div class="srgrid" style="margin-top:16px">
+    <div class="srbox bad">
+      <h3>✕ "여기를 클릭하세요"</h3>
+      <div class="srlines">
+        <div>"링크, 여기"</div>
+        <div>"링크, 여기"</div>
+        <div>"링크, 여기"</div>
+        <div style="margin-top:10px;color:var(--ink-2);font-family:inherit;font-size:13.5px;line-height:1.6">스크린리더는 링크만 모아 목록으로 읽어주는 기능이 있습니다. 전부 "여기"면 어디로 가는 링크인지 알 수 없습니다.</div>
+      </div>
+    </div>
+    <div class="srbox good">
+      <h3>✓ 목적지를 쓴 링크</h3>
+      <div class="srlines">
+        <div>"링크, 장학금 신청서 내려받기"</div>
+        <div>"링크, 수강신청 시스템 열기"</div>
+        <div>"링크, 학사일정 전체 보기"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">TOOL 04</span><h2>내 공지 자가진단</h2></div>
+  <p class="sdesc">공지를 올리기 전 10초짜리 점검입니다. 해당하는 항목에 모두 체크하세요.</p>
+  <div class="check" id="chk">
+    <label><input type="checkbox"><span class="qt">공지 내용이 이미지가 아니라 텍스트로도 올라가 있다<span class="qh">포스터를 올리더라도 본문에 같은 내용을 글로 함께 적었는가</span></span></label>
+    <label><input type="checkbox"><span class="qt">모든 이미지에 대체 텍스트(alt)를 넣었다<span class="qh">"포스터.jpg"가 아니라 무엇이 담겼는지 적었는가</span></span></label>
+    <label><input type="checkbox"><span class="qt">중요한 구분을 색으로만 하지 않았다<span class="qh">빨강·초록 대신 글자나 기호로도 구분했는가</span></span></label>
+    <label><input type="checkbox"><span class="qt">글자와 배경의 명암비가 4.5:1 이상이다<span class="qh">위 TOOL 01로 확인했는가</span></span></label>
+    <label><input type="checkbox"><span class="qt">제목을 글자 크기가 아니라 제목 서식으로 지정했다<span class="qh">굵게·크게가 아니라 실제 제목 단계를 썼는가</span></span></label>
+    <label><input type="checkbox"><span class="qt">링크 문구에 목적지가 드러난다<span class="qh">"여기를 클릭" 대신 "장학금 신청서 내려받기"인가</span></span></label>
+    <label><input type="checkbox"><span class="qt">표를 이미지가 아닌 표로 만들었다<span class="qh">일정표·모집단위 표가 캡처 이미지는 아닌가</span></span></label>
+    <label><input type="checkbox"><span class="qt">첨부한 PDF에서 글자를 드래그·복사할 수 있다<span class="qh">스캔 이미지 PDF는 전혀 읽히지 않는다</span></span></label>
+    <label><input type="checkbox"><span class="qt">영상에 자막이 있다<span class="qh">청각장애 학생과 소리를 켤 수 없는 상황 모두를 위한 것</span></span></label>
+    <label><input type="checkbox"><span class="qt">키보드 탭 키만으로 모든 버튼에 도달할 수 있다<span class="qh">마우스를 쓰기 어려운 사용자를 위한 최소 조건</span></span></label>
+  </div>
+  <div class="score">
+    <span class="n" id="sc">0 / 10</span>
+    <span class="txt" id="sctxt">항목을 체크하면 결과가 나타납니다.</span>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">PROJECT</span><h2>이 프로젝트가 하려는 일</h2></div>
+  <div class="prog">
+    <h3>지금 보고 계신 것이 1차 산출물입니다</h3>
+    <p style="color:var(--ink-2);font-size:15px">진단 도구 v0.1은 오늘 공개되었습니다. 앞으로 3개월 동안 이 도구를 캠퍼스 실태 조사와 개선 제안으로 확장합니다. 도구가 먼저 있고 조사가 따라오는 순서를 택한 이유는, 진단 기준이 손에 잡혀야 조사 결과가 비교 가능해지기 때문입니다.</p>
+  </div>
+  <table class="road">
+    <tr><td class="done">완료</td><td><b>진단 도구 v0.1 공개</b> — 명암비 검사기, 시야 시뮬레이터, 스크린리더 비교, 자가진단 체크리스트</td></tr>
+    <tr><td>10월</td><td>교내 공지 채널 실태 조사 — 학과 홈페이지·학생회 SNS·공지 게시판에서 최근 공지 100건을 수집해 10개 항목으로 채점</td></tr>
+    <tr><td>10~11월</td><td>당사자 인터뷰 — 저시력·색약·시각장애 재학생 및 장애학생지원센터 담당자 인터뷰로 실제 불편의 우선순위 확인</td></tr>
+    <tr><td>11월</td><td>개선 워크숍 — 학생회·학과 조교 대상 "읽히는 공지 만들기" 실습 2회, 공지 템플릿 배포</td></tr>
+    <tr><td>12월</td><td>실태 리포트 발간 및 도구 v1.0 공개, 개선 전후 재측정 결과 공유</td></tr>
+  </table>
+  <p style="margin-top:20px;font-size:15px;color:var(--ink-2)">저희는 누구를 탓하려는 것이 아닙니다. 공지를 올리는 사람 대부분은 접근성 기준을 배운 적이 없을 뿐입니다. 그래서 비난 대신 <b>30초 안에 스스로 확인하고 고칠 수 있는 도구</b>를 먼저 만들었습니다.</p>
+</section>
+
+<footer>
+  읽히는캠퍼스 v0.1 · CREAI+IT · 2026 하반기 IHEI WORKSTATION 신청 프로젝트<br>
+  명암비 계산은 WCAG 2.1 상대휘도 공식을 따릅니다. 색각 시뮬레이션은 표준 변환 행렬에 기반한 근사이며 실제 지각과 동일하지 않습니다. 이 페이지 자체도 진단 대상입니다 — 개선 제안을 환영합니다.
+</footer>
+
+</div>
+</main>
+
+<script>
+(function(){
+  var fg=document.getElementById('fg'),bg=document.getElementById('bg'),
+      fgp=document.getElementById('fgp'),bgp=document.getElementById('bgp'),
+      pv=document.getElementById('pv'),ratio=document.getElementById('ratio');
+
+  function hex2rgb(h){
+    h=(h||'').trim().replace('#','');
+    if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    if(!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
+  }
+  function lum(c){
+    var a=c.map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+    return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];
+  }
+  function setV(id,pass){
+    var el=document.getElementById(id);
+    el.className='v '+(pass?'ok':'no');
+    el.querySelector('.vr').textContent=pass?'통과':'미달';
+  }
+  function update(){
+    var f=hex2rgb(fg.value), b=hex2rgb(bg.value);
+    if(!f||!b) return;
+    var L1=lum(f), L2=lum(b);
+    var r=(Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05);
+    ratio.textContent=r.toFixed(2)+':1';
+    pv.style.background='#'+b.map(function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+    pv.style.color='#'+f.map(function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+    setV('v-aa',r>=4.5); setV('v-aaa',r>=7); setV('v-large',r>=3); setV('v-ui',r>=3);
+  }
+  function sync(txt,pick,fromPicker){
+    if(fromPicker){txt.value=pick.value.toUpperCase();}
+    else{var v=hex2rgb(txt.value); if(v) pick.value='#'+v.map(function(x){return ('0'+x.toString(16)).slice(-2);}).join('');}
+    update();
+  }
+  fgp.addEventListener('input',function(){sync(fg,fgp,true);});
+  bgp.addEventListener('input',function(){sync(bg,bgp,true);});
+  fg.addEventListener('input',function(){sync(fg,fgp,false);});
+  bg.addEventListener('input',function(){sync(bg,bgp,false);});
+  update();
+
+  var notes={
+    'none':'중요한 정보를 색으로만 구분하면, 색으로 구분하지 못하는 사람에게는 그 정보가 사라집니다. 빨강·초록으로 나눈 "가능/불가능"이 대표적입니다.',
+    'f-low':'저시력 조건에서는 작은 글씨의 날짜와 담당 부서가 먼저 사라집니다. 본문 15px 미만, 명암비 4.5:1 미만이 겹치면 읽히지 않습니다.',
+    'f-deut':'적록색약 조건에서는 빨강 "9월 15일까지"와 초록 "정정이 불가능"이 거의 같은 색으로 보입니다. 마감과 금지라는 가장 중요한 두 정보가 구분되지 않습니다.',
+    'f-cat':'백내장·노안 조건에서는 전체 대비가 떨어지고 흐려집니다. 연한 회색 본문은 이 조건에서 사실상 배경과 섞입니다.'
+  };
+  var stage=document.getElementById('simtarget'), simnote=document.getElementById('simnote');
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(btn){
+    btn.addEventListener('click',function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){b.setAttribute('aria-selected','false');});
+      btn.setAttribute('aria-selected','true');
+      var f=btn.getAttribute('data-f');
+      stage.style.filter=(f==='none')?'none':'url(#'+f+')';
+      simnote.textContent=notes[f];
+    });
+  });
+
+  var boxes=document.querySelectorAll('#chk input'), sc=document.getElementById('sc'), sct=document.getElementById('sctxt');
+  function score(){
+    var n=0; Array.prototype.forEach.call(boxes,function(b){if(b.checked)n++;});
+    sc.textContent=n+' / 10';
+    var t;
+    if(n===0) t='항목을 체크하면 결과가 나타납니다.';
+    else if(n<=3) t='지금 상태로는 상당수 학생에게 이 공지가 전달되지 않습니다. 가장 먼저 고칠 것은 이미지 대신 텍스트로 올리는 것입니다.';
+    else if(n<=6) t='기본은 갖췄지만 빠진 항목이 실제 배제로 이어집니다. 체크하지 않은 항목부터 하나씩 보완해 보세요.';
+    else if(n<=9) t='좋습니다. 남은 항목만 채우면 대부분의 학생에게 동일하게 전달됩니다.';
+    else t='모든 항목을 충족했습니다. 이 공지는 읽힙니다.';
+    sct.textContent=t;
+    sc.style.color = n===0 ? 'var(--ink)' : (n<=3 ? 'var(--fail)' : (n<=6 ? 'var(--warnc)' : 'var(--pass)'));
+  }
+  Array.prototype.forEach.call(boxes,function(b){b.addEventListener('change',score);});
+  score();
+})();
+</script>
+
+</body>
+</html>
